@@ -33,7 +33,7 @@ class Parser:
         self.position = 0
     
     def current_token(self):
-        return self.tokens[self.position] if self.position < len(self.tokens) else None
+        return self.tokens[self.position] if self.position < len(self.tokens) else (None, None)
 
     def eat(self, token_type):
         if self.current_token()[0] == token_type:
@@ -44,7 +44,7 @@ class Parser:
     # Regla para E -> E + T | E - T | T
     def parse_E(self):
         result = self.parse_T()
-        while self.current_token() in ['PLUS', 'MINUS']:
+        while self.current_token()[0] in ['PLUS', 'MINUS']:
             if self.current_token()[0] == 'PLUS':
                 self.eat('PLUS')
                 result += self.parse_T()
@@ -56,7 +56,7 @@ class Parser:
     # Regla para T -> T * F | T / F | F
     def parse_T(self):
         result = self.parse_F()
-        while self.current_token() in ['TIMES', 'DIVIDE']:
+        while self.current_token()[0] in ['TIMES', 'DIVIDE']:
             if self.current_token()[0] == 'TIMES':
                 self.eat('TIMES')
                 result *= self.parse_F()
@@ -67,7 +67,6 @@ class Parser:
 
     # Regla para F -> ( E ) | número
     def parse_F(self):
-        
         if self.current_token()[0] == 'LPAREN':
             self.eat('LPAREN')
             result = self.parse_E()
@@ -84,6 +83,7 @@ class Parser:
 # Ahora podemos probar nuestro analizador con una expresión matemática.
 input_string = "3 + 5 * (10 - 4)"
 tokenized_input = tokenize(input_string)
+
 parser = Parser(tokenized_input)
 result = parser.parse_E()
 print(f"Resultado: {result}")
