@@ -18,7 +18,11 @@ tokens = [
 def tokenize(input_string):
     tokens_spec = "|".join(f"(?P<{name}>{pattern})" for name, pattern in tokens)
     regex = re.compile(tokens_spec)
-    return [match.lastgroup for match in regex.finditer(input_string) if match.lastgroup != "SPACE"]
+    return [
+        (match.lastgroup, match.group())
+        for match in regex.finditer(input_string)
+        if match.lastgroup != "SPACE"
+    ]
 
 # Paso 2: Definir las Funciones Recursivas
 # Ahora que tenemos los tokens, implementamos las funciones recursivas. Empezaremos con la función principal, `E`, y luego definiremos las funciones para `T` y `F`:
@@ -32,7 +36,7 @@ class Parser:
         return self.tokens[self.position] if self.position < len(self.tokens) else None
 
     def eat(self, token_type):
-        if self.current_token() == token_type:
+        if self.current_token()[0] == token_type:
             self.position += 1
         else:
             raise SyntaxError(f"Se esperaba {token_type}, pero se encontró {self.current_token()}")
@@ -41,10 +45,10 @@ class Parser:
     def parse_E(self):
         result = self.parse_T()
         while self.current_token() in ['PLUS', 'MINUS']:
-            if self.current_token() == 'PLUS':
+            if self.current_token()[0] == 'PLUS':
                 self.eat('PLUS')
                 result += self.parse_T()
-            elif self.current_token() == 'MINUS':
+            elif self.current_token()[0] == 'MINUS':
                 self.eat('MINUS')
                 result -= self.parse_T()
         return result
@@ -53,23 +57,24 @@ class Parser:
     def parse_T(self):
         result = self.parse_F()
         while self.current_token() in ['TIMES', 'DIVIDE']:
-            if self.current_token() == 'TIMES':
+            if self.current_token()[0] == 'TIMES':
                 self.eat('TIMES')
                 result *= self.parse_F()
-            elif self.current_token() == 'DIVIDE':
+            elif self.current_token()[0] == 'DIVIDE':
                 self.eat('DIVIDE')
                 result /= self.parse_F()
         return result
 
     # Regla para F -> ( E ) | número
     def parse_F(self):
-        if self.current_token() == 'LPAREN':
+        
+        if self.current_token()[0] == 'LPAREN':
             self.eat('LPAREN')
             result = self.parse_E()
             self.eat('RPAREN')
             return result
-        elif self.current_token() == 'NUM':
-            num = int(self.tokens[self.position])
+        elif self.current_token()[0] == 'NUM':
+            num = int(self.current_token()[1]) 
             self.eat('NUM')
             return num
         else:
