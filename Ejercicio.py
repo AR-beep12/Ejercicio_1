@@ -13,6 +13,7 @@ tokens = [
     ("DIVIDE", r"/"),  # División
     ("LPAREN", r"\("),  # Paréntesis izquierdo
     ("RPAREN", r"\)"),  # Paréntesis derecho
+    ("POWER", r"\^"),   # Exponente
     ("SPACE", r"\s+"),  # Espacios (que ignoramos)
 ]
 
@@ -95,6 +96,10 @@ class Parser:
             num = int(self.current_token()[1])
             self.eat('NUM')
             self.parse_tree.insert(f"NUM:{num}", "middle")
+            if self.current_token()[0] == 'POWER':
+                self.eat('POWER')
+                exponent = self.parse_F()
+                return num ** exponent
             return num
         else:
             raise SyntaxError(f"Se esperaba número o paréntesis, pero se encontró {self.current_token()}")
