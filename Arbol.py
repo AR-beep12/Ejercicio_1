@@ -17,7 +17,6 @@ class TernaryTree:
             self._insert(self.root, value, position)
 
     def _insert(self, node, value, position):
-        # Permitir insertar según posición específica
         if position == "left":
             if node.left is None:
                 node.left = Node(value)
@@ -34,17 +33,19 @@ class TernaryTree:
             else:
                 self._insert(node.right, value, position)
         else:
-            raise ValueError("Posición inválida: use 'left', 'middle' o 'right'.")
+            raise ValueError("Invalid position: use 'left', 'middle', or 'right'.")
 
-    def print_tree(self, node, level=0):
-        if node is not None:
-            print(" " * (level * 4) + f"|- {node.value}")
-            if node.left:
-                print(" " * (level * 4) + "  Left:")
-                self.print_tree(node.left, level + 1)
-            if node.middle:
-                print(" " * (level * 4) + "  Middle:")
-                self.print_tree(node.middle, level + 1)
-            if node.right:
-                print(" " * (level * 4) + "  Right:")
-                self.print_tree(node.right, level + 1)
+    def print_tree(self, node=None, prefix="", is_last=True):
+        if node is None:
+            node = self.root 
+
+        connector = "└── " if is_last else "├── "
+        print(prefix + connector + str(node.value))
+
+        new_prefix = prefix + ("    " if is_last else "│   ")
+
+        children = [node.left, node.middle, node.right]
+        children = [child for child in children if child is not None]
+
+        for i, child in enumerate(children):
+            self.print_tree(child, new_prefix, i == len(children) - 1)
