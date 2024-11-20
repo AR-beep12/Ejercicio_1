@@ -48,61 +48,76 @@ class Parser:
         if self.current_token()[0] == token_type:
             self.position += 1
         else:
-            raise SyntaxError(f"Se esperaba {token_type}, pero se encontró {self.current_token()}")
+            token_actual = self.current_token()
+            raise SyntaxError(
+                f"Error en posición {self.position}: "
+                f"Se esperaba {token_type}, pero se encontró {token_actual}. "
+                f"Contexto: {self.tokens[max(0, self.position - 3):self.position + 3]}"
+            )
 
     # Regla para E -> E + T | E - T | T
     def parse_E(self):
-        result = self.parse_T()
-        while self.current_token()[0] in ['PLUS', 'MINUS']:
-            self.parse_tree.insert('E', "left")
-            if self.current_token()[0] == 'PLUS':
-                self.parse_tree.insert('+', "middle")
-                self.eat('PLUS')
-                result += self.parse_T()
-            elif self.current_token()[0] == 'MINUS':
-                self.parse_tree.insert('-', "middle")
-                self.eat('MINUS')
-                self.parse_tree.insert('T', "right")
-                result -= self.parse_T()
+        try:
+            result = self.parse_T()
+            while self.current_token()[0] in ['PLUS', 'MINUS']:
+                self.parse_tree.insert('E', "left")
+                if self.current_token()[0] == 'PLUS':
+                    self.parse_tree.insert('+', "middle")
+                    self.eat('PLUS')
+                    result += self.parse_T()
+                elif self.current_token()[0] == 'MINUS':
+                    self.parse_tree.insert('-', "middle")
+                    self.eat('MINUS')
+                    self.parse_tree.insert('T', "right")
+                    result -= self.parse_T()
 
-        self.parse_tree.insert('T', "left")
-
-        return result
+            self.parse_tree.insert('T', "left")
+            return result
+        except SyntaxError as e:
+            raise SyntaxError(f"Error en 'parse_E': {e}")
 
     # Regla para T -> T * F | T / F | F
     def parse_T(self):
-        result = self.parse_F()
-        while self.current_token()[0] in ['TIMES', 'DIVIDE']:
-            if self.current_token()[0] == 'TIMES':
-                self.eat('TIMES')
-                self.parse_tree.insert('*', "middle")
-                result *= self.parse_F()
-            elif self.current_token()[0] == 'DIVIDE':
-                self.eat('DIVIDE')
-                self.parse_tree.insert('/', "right")
-                result /= self.parse_F()
-        return result
-
-    # Regla para F -> ( E ) | número
-    def parse_F(self):
-        if self.current_token()[0] == 'LPAREN':
-            self.eat('LPAREN')
-            self.parse_tree.insert('(', "left")
-            result = self.parse_E()
-            self.eat('RPAREN')
-            self.parse_tree.insert(')', "right")
+        try:
+            result = self.parse_F()
+            while self.current_token()[0] in ['TIMES', 'DIVIDE']:
+                if self.current_token()[0] == 'TIMES':
+                    self.eat('TIMES')
+                    self.parse_tree.insert('*', "middle")
+                    result *= self.parse_F()
+                elif self.current_token()[0] == 'DIVIDE':
+                    self.eat('DIVIDE')
+                    self.parse_tree.insert('/', "right")
+                    result /= self.parse_F()
             return result
-        elif self.current_token()[0] == 'NUM':
-            num = int(self.current_token()[1])
-            self.eat('NUM')
-            self.parse_tree.insert(f"NUM:{num}", "middle")
-            if self.current_token()[0] == 'POWER':
-                self.eat('POWER')
-                exponent = self.parse_F()
-                return num ** exponent
-            return num
-        else:
-            raise SyntaxError(f"Se esperaba número o paréntesis, pero se encontró {self.current_token()}")
+        except SyntaxError as e:
+            raise SyntaxError(f"Error en 'parse_T': {e}")
+
+    def parse_F(self):
+        try:
+            if self.current_token()[0] == 'LPAREN':
+                self.eat('LPAREN')
+                self.parse_tree.insert('(', "left")
+                result = self.parse_E()
+                self.eat('RPAREN')
+                self.parse_tree.insert(')', "right")
+                return result
+            elif self.current_token()[0] == 'NUM':
+                num = int(self.current_token()[1])
+                self.eat('NUM')
+                self.parse_tree.insert(f"NUM:{num}", "middle")
+                if self.current_token()[0] == 'POWER':
+                    self.eat('POWER')
+                    exponent = self.parse_F()
+                    return num ** exponent
+                return num
+            else:
+                raise SyntaxError(
+                    f"Error en posición {self.position}: Token inesperado {self.current_token()}. "
+                    f"Se esperaba un número o '('. Contexto: {self.tokens[max(0, self.position - 3):self.position + 3]}"
+                )
+        except SyntaxError as e:
+            raise SyntaxError(f"Error en 'parse_F': {e}")
 
 
 # Paso 3: Probar el Analizador
